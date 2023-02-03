@@ -1,0 +1,37 @@
+version: '2.1'
+services:
+    webserver:
+        build: .
+        image: de_rec/airflow:latest
+        container_name: de_rec_airflow_webserver
+        restart: always
+        env_file: .env
+        depends_on:
+            - localstack
+            - postgres
+        volumes:
+          - ../airflow/dags:/opt/airflow/dags
+          - ../airflow/plugins:/opt/airflow/plugins
+          - ../airflow/data:/opt/airflow/data
+        ports:
+            - "8080:8080"
+        command: webserver
+    localstack:
+        container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+        image: localstack/localstack
+        ports:
+            - "4566:4566"
+            - "4571:4571"
+        environment:
+            - SERVICES=s3
+            - DEFAULT_REGION=eu-north-1
+            - DATA_DIR=/var/lib/localstack
+        volumes:
+            - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+    postgres:
+        image: postgres:12.3
+        container_name: de_rec_postgres
+        env_file: .env
+        ports:
+            - "5433:5432"
